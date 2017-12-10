@@ -13,9 +13,6 @@ import (
 )
 
 var Blank = ""
-var Manifest string
-var UriPrefix string
-var SubGroup string
 var x264Profiles = map[string]string{"Baseline": "42", "Main": "4d", "High": "64"}
 var AudioProfiles = map[string]string{"HE-AACv2": "mp4a.40.5", "LC": "mp4a.40.2", "mp3": "mp4a.40.34"}
 
@@ -39,10 +36,91 @@ type Container struct {
 }
 
 type Stanza struct {
+	Manifest   string
+	UriPrefix  string
+	SubGroup   string
 	Bandwidth  string
 	Resolution string
 	ACodec     string
 	VCodec     string
+	Segment    string
+}
+
+// Command line flags
+func (st *Stanza) mkFlags() {
+	flag.StringVar(&st.Manifest, "i", Blank, "manifest file (required)")
+	flag.StringVar(&st.SubGroup, "s", Blank, "add subtitle group i.e. SUBTITLES= (optional)")
+	flag.StringVar(&st.UriPrefix, "u", Blank, "url prefix to add to index.m3u8 path (optional)")
+	flag.Parse()
+}
+
+func (st *Stanza) SetVCodec(i Stream) {
+	st.Resolution = fmt.Sprintf("%vx%v", i.Width, i.Height)
+	if i.CodecName == "h264" {
+		if x264Profiles[i.Profile] != Blank {
+			st.VCodec = fmt.Sprintf("avc1.%v00%x", x264Profiles[i.Profile], int(i.Level))
+		}
+	} else {
+
+	}
+
+}
+
+// determine audio codec for a stream
+func (st *Stanza) SetACodec(i Stream) {
+	if AudioProfiles[i.CodecName] != Blank {
+		st.ACodec = AudioProfiles[i.CodecName]
+		return
+	}
+	if AudioProfiles[i.Profile] != Blank {
+		st.ACodec = AudioProfiles[i.Profile]
+		return
+	}
+	if st.ACodec == Blank {
+		badCodec(i.CodecName)
+	}
+}
+
+//ensure urlprefix ends in a "/"
+func (st *Stanza) FixPrefix() {
+	if st.UriPrefix != Blank {
+		if !(strings.HasSuffix(st.UriPrefix, "/")) {
+			if !(strings.HasPrefix(st.Manifest, "/")) {
+				st.UriPrefix += "/"
+			}
+		}
+	}
+
+}
+
+// create a subtitle stanza for use in the  master.m3u8
+func (st *Stanza) mkSubStanza() string {
+	if st.SubGroup == Blank {
+		st.SubGroup = "WebVtt"
+	}
+	one := fmt.Sprintf("#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"%s\",", st.SubGroup)
+	two := "NAME=\"English\",DEFAULT=YES,AUTOSELECT=YES,FORCED=NO,"
+	three := fmt.Sprintf("LANGUAGE=\"en\",URI=\"%s%s\"\n", st.UriPrefix, st.Manifest)
+	return one + two + three
+}
+
+// determine final codec value for stanza
+func (st *Stanza) CodecString() string {
+	if st.VCodec != Blank && st.ACodec != Blank {
+		return fmt.Sprintf("\"%s,%s\"", st.VCodec, st.ACodec)
+	}
+	if st.ACodec != Blank {
+		return fmt.Sprintf("\"%s\"", st.ACodec)
+	}
+	if st.VCodec != Blank {
+		return fmt.Sprintf("\"%s\"", st.VCodec)
+	}
+	return Blank
+}
+
+func badCodec(codecName string) {
+	fmt.Printf("no value for %s codec string", codecName)
+	syscall.Exit(-1)
 }
 
 // Generic catchall error checking
@@ -64,39 +142,18 @@ func Probe(segment string) []byte {
 	return data
 }
 
-//ensure urlprefix ends in a "/"
-func fixPrefix(manifest string, uriprefix string) string {
-	if uriprefix != Blank {
-		if !(strings.HasSuffix(uriprefix, "/")) {
-			if !(strings.HasPrefix(manifest, "/")) {
-				uriprefix += "/"
-			}
-		}
-	}
-	return uriprefix
-}
-
-// create a subtitle stanza for use in the  master.m3u8
-func mkSubStanza(manifest string, uriprefix string, subgroup string) string {
-	if subgroup == Blank {
-		subgroup = "WebVtt"
-	}
-	one := fmt.Sprintf("#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID=\"%s\",", subgroup)
-	two := "NAME=\"English\",DEFAULT=YES,AUTOSELECT=YES,FORCED=NO,"
-	three := fmt.Sprintf("LANGUAGE=\"en\",URI=\"%s%s\"\n", uriprefix, manifest)
-	return one + two + three
-}
-
 // find the first segment in the m3u8 file
 func findSegment(manifest string) string {
 	file, err := os.Open(manifest)
-	chk(err, "trouble reading manifest")
+	chk(err, fmt.Sprintf("trouble reading %s", manifest))
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if !(strings.HasPrefix(line, "#")) {
+			// manifest="/hls/720/index.m3u8" path.Base(manifest)="index.m3u8", line="index0.ts"
 			segment := strings.Replace(manifest, path.Base(manifest), line, 1)
-
+			// segment ="/hls/720/index0.ts"
+			fmt.Println(segment)
 			return segment
 		}
 	}
@@ -110,90 +167,55 @@ func showStanza(stanza string, mpath string) {
 	fmt.Println(mpath)
 }
 
-// determine audio codec for a stream
-func setACodec(i Stream) string {
-	if AudioProfiles[i.CodecName] != "" {
-		return AudioProfiles[i.CodecName]
-
-	}
-	if AudioProfiles[i.Profile] != "" {
-		return AudioProfiles[i.Profile]
-	}
-	return ""
-}
-
-// determine final codec value for stanza
-func setStanzaCodec(st Stanza) string {
-		if st.VCodec != "" &&  st.ACodec != "" {
-			return fmt.Sprintf("\"%s,%s\"", st.VCodec, st.ACodec)
-		}
-		if st.ACodec != "" {
-		return fmt.Sprintf("\"%s\"", st.ACodec)
-	} 
-		if st.VCodec != "" {
-			return fmt.Sprintf("\"%s\"", st.VCodec)
-		}
-	return ""
-}
-
 //Generate full stanza for master.m3u8 file
-func mkStanza(manifest string, segment string, subgroup string, uriprefix string) {
-	var st Stanza
+func mkStanza(st Stanza) {
 	var f Container
-	jason := Probe(segment)
+	jason := Probe(st.Segment)
 	err := json.Unmarshal(jason, &f)
 	chk(err, "bad data while probing file")
 	st.Bandwidth = f.Format.BitRate
-	uriprefix = fixPrefix(manifest, uriprefix)
-	st.ACodec = ""
-	st.VCodec = ""
-	codec := ""
+	codec := Blank
 	for _, i := range f.Streams {
 		if i.CodecType == "subtitle" {
-			substanza := mkSubStanza(manifest, uriprefix, subgroup)
+			substanza := st.mkSubStanza()
 			showStanza(substanza, Blank)
 			return
 		}
 		if i.CodecType == "video" {
-			st.Resolution = fmt.Sprintf("%vx%v", i.Width, i.Height)
-			st.VCodec = fmt.Sprintf("avc1.%v00%x", x264Profiles[i.Profile], int(i.Level))
+			st.SetVCodec(i)
 		}
 		if i.CodecType == "audio" {
-			st.ACodec = setACodec(i)
+			st.SetACodec(i)
 		}
 	}
-	codec = setStanzaCodec(st)
-	m3u8Stanza := ""
-	if st.VCodec != "" {
+	codec = st.CodecString()
+	m3u8Stanza := Blank
+	if st.VCodec != Blank {
 		m3u8Stanza = fmt.Sprintf("#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=%v,RESOLUTION=%s,CODECS=%s", st.Bandwidth, st.Resolution, codec)
-		if subgroup != Blank {
-			m3u8Stanza = fmt.Sprintf("%s,SUBTITLES=\"%s\"", m3u8Stanza, subgroup)
+		if st.SubGroup != Blank {
+			m3u8Stanza = fmt.Sprintf("%s,SUBTITLES=\"%s\"", m3u8Stanza, st.SubGroup)
 		}
 	} else {
 		m3u8Stanza = fmt.Sprintf("#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=%v,CODECS=%s", st.Bandwidth, codec)
 	}
-	mpath := fmt.Sprintf("%s%s\n", uriprefix, manifest)
+	mpath := fmt.Sprintf("%s%s\n", st.UriPrefix, st.Manifest)
 	showStanza(m3u8Stanza, mpath)
 }
 
-// Command line flags
-func mkFlags() {
-	flag.StringVar(&Manifest, "i", Blank, "manifest file (required)")
-	flag.StringVar(&SubGroup, "s", Blank, "add subtitle group i.e. SUBTITLES= (optional)")
-	flag.StringVar(&UriPrefix, "u", Blank, "url prefix to add to index.m3u8 path (optional)")
-	flag.Parse()
-}
-
-// find a segment, make a stanza
-func do(manifest string, subgroup string, uriprefix string) {
-	segment := findSegment(Manifest)
-	mkStanza(manifest, segment, subgroup, uriprefix)
+// Makes it easy to call without command line flags/vars
+func do(st Stanza) {
+	if st.UriPrefix != Blank {
+		st.FixPrefix()
+	}
+	st.Segment = findSegment(st.Manifest)
+	mkStanza(st)
 }
 
 func main() {
-	mkFlags()
-	if Manifest != Blank {
-		do(Manifest, SubGroup, UriPrefix)
+	var st Stanza
+	st.mkFlags()
+	if st.Manifest != Blank {
+		do(st)
 	} else {
 		flag.PrintDefaults()
 	}
