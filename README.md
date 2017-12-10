@@ -20,7 +20,7 @@ Generate variant stanza for master.m3u8 file
 ## Examples
 
 * (Audio Codec mp3 )
-``` 
+```sh 
 ./mkstanza -i mp3.m3u8
  
 #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=154074,CODECS="mp4a.40.34"
@@ -37,7 +37,7 @@ http://example.com/mp3.m3u8
 ```
 * ( Video Codec h264; profile High ; level 3.1 Audio Codec aac; profile HE-AACv2 )
 
-```go 
+```sh 
 ./mkstanza  -i audio_and_video.m3u8
 
 #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1994969,RESOLUTION=1280x720,CODECS="avc1.64001f,mp4a.40.5"
@@ -45,7 +45,7 @@ audio_and_video.m3u8
 
 ```
 * ( Video Codec h264; profile High ; level 3 Audio Codec aac; profile HE-AACv2 )
-```go
+```sh
  ./mkstanza  -i audio_and_video.m3u8 - u http://example.com 
 
 #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=866368,RESOLUTION=640x360,CODECS="avc1.64001e,mp4a.40.5"
@@ -53,7 +53,7 @@ http://example.com/audio_and_video.m3u8
 
 ```
 * ( Video Codec h264; profile Main ; level 3.1  Audio Codec aac; profile LC )
-```
+```sh
 ./mkstanza  -i audio_and_video.m3u8 - u http://example.com -s mySubGroup
 
 
@@ -63,7 +63,7 @@ http://example.com/audio_and_video.m3u8
 ```
 * ( Subtitle Codec webvtt )
 
-```
+```sh
 ./mkstanza -i index_vtt.m3u8
 
 
