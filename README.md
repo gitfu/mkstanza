@@ -74,7 +74,14 @@ http://example.com/audio_and_video.m3u8
 
 * ( Multiple input files, (-s) SubGroup= "fu", (-u) UriPrefix= "http://fu.zu")
 ```go
-./mkstanza -i /home/leroy/manifesto/ctrl/720/index.m3u8 -i  /home/leroy/manifesto/ctrl/360/index.m3u8 -s "fu" -u http://fu.zu  -i /home/leroy/manifesto/99/360/index.m3u8   -i /home/leroy/manifesto/99/720/index.m3u8  -i /home/leroy/manifesto/99/432/index.m3u8 -i /home/leroy/manifesto/scte35/subs/index_vtt.m3u8  
+./mkstanza -i /home/leroy/manifesto/ctrl/720/index.m3u8 \
+-i /home/leroy/manifesto/ctrl/360/index.m3u8 \
+-s fu \
+-u http://fu.zu \
+-i /home/leroy/manifesto/99/360/index.m3u8 \
+-i /home/leroy/manifesto/99/720/index.m3u8 \
+-i /home/leroy/manifesto/99/432/index.m3u8 \
+-i /home/leroy/manifesto/scte35/subs/index_vtt.m3u8  
 
 
 
