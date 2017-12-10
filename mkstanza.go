@@ -149,7 +149,6 @@ func mkStanza(manifest string, segment string, subgroup string, uriprefix string
 	st.VCodec = ""
 	codec := ""
 	for _, i := range f.Streams {
-		fmt.Println(i.CodecName)
 		if i.CodecType == "subtitle" {
 			substanza := mkSubStanza(manifest, uriprefix, subgroup)
 			showStanza(substanza, Blank)
