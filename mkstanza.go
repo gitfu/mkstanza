@@ -124,16 +124,15 @@ func setACodec(i Stream) string {
 
 // determine final codec value for stanza
 func setStanzaCodec(st Stanza) string {
-	if st.ACodec != "" {
-		return fmt.Sprintf("\"%s\"", st.ACodec)
-		if st.VCodec != "" {
+		if st.VCodec != "" &&  st.ACodec != "" {
 			return fmt.Sprintf("\"%s,%s\"", st.VCodec, st.ACodec)
 		}
-	} else {
+		if st.ACodec != "" {
+		return fmt.Sprintf("\"%s\"", st.ACodec)
+	} 
 		if st.VCodec != "" {
 			return fmt.Sprintf("\"%s\"", st.VCodec)
 		}
-	}
 	return ""
 }
 
