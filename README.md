@@ -72,7 +72,7 @@ http://example.com/audio_and_video.m3u8
 ```
 
 
-* ( Multiple input files, (-s) SubGroup= "fu", (-u) UriPrefix= "http://fu.zu")
+* ((-i) nf = Multiple input files, (-s) SubGroup= "fu", (-u) UriPrefix= "http://fu.zu")
 ```go
 ./mkstanza -i /home/leroy/manifesto/ctrl/720/index.m3u8 \
 -i /home/leroy/manifesto/ctrl/360/index.m3u8 \
