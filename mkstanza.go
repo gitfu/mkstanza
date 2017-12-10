@@ -12,9 +12,27 @@ import (
 	"syscall"
 )
 
+var SubGroup string
+var UriPrefix string
 var Blank = ""
-var x264Profiles = map[string]string{"Baseline": "42", "Main": "4d", "High": "64"}
+var x264Profiles = map[string]string{"Baseline": "42E0", "Main": "4d40", "High": "6400"}
 var AudioProfiles = map[string]string{"HE-AACv2": "mp4a.40.5", "LC": "mp4a.40.2", "mp3": "mp4a.40.34"}
+
+type infiles []string
+
+// the flag.Value interface
+func (nf *infiles) String() string {
+	return fmt.Sprintf("%s", *nf)
+}
+
+// The second method is Set
+func (nf *infiles) Set(value string) error {
+	//fmt.Printf("%s\n", value)
+	*nf = append(*nf, value)
+	return nil
+}
+
+var nf infiles
 
 type Format struct {
 	FormatName string `json:"format_name"`
@@ -46,22 +64,14 @@ type Stanza struct {
 	Segment    string
 }
 
-// Command line flags
-func (st *Stanza) mkFlags() {
-	flag.StringVar(&st.Manifest, "i", Blank, "manifest file (required)")
-	flag.StringVar(&st.SubGroup, "s", Blank, "add subtitle group i.e. SUBTITLES= (optional)")
-	flag.StringVar(&st.UriPrefix, "u", Blank, "url prefix to add to index.m3u8 path (optional)")
-	flag.Parse()
-}
-
 func (st *Stanza) SetVCodec(i Stream) {
 	st.Resolution = fmt.Sprintf("%vx%v", i.Width, i.Height)
 	if i.CodecName == "h264" {
 		if x264Profiles[i.Profile] != Blank {
-			st.VCodec = fmt.Sprintf("avc1.%v00%x", x264Profiles[i.Profile], int(i.Level))
+			st.VCodec = fmt.Sprintf("avc1.%v%x", x264Profiles[i.Profile], int(i.Level))
 		}
 	} else {
-
+		unSupCodec(i.CodecName)
 	}
 
 }
@@ -77,7 +87,7 @@ func (st *Stanza) SetACodec(i Stream) {
 		return
 	}
 	if st.ACodec == Blank {
-		badCodec(i.CodecName)
+		unSupCodec(i.CodecName)
 	}
 }
 
@@ -118,8 +128,8 @@ func (st *Stanza) CodecString() string {
 	return Blank
 }
 
-func badCodec(codecName string) {
-	fmt.Printf("no value for %s codec string", codecName)
+func unSupCodec(codecName string) {
+	fmt.Printf("the codec %s is not currently supported.\n\n", codecName)
 	syscall.Exit(-1)
 }
 
@@ -153,7 +163,6 @@ func findSegment(manifest string) string {
 			// manifest="/hls/720/index.m3u8" path.Base(manifest)="index.m3u8", line="index0.ts"
 			segment := strings.Replace(manifest, path.Base(manifest), line, 1)
 			// segment ="/hls/720/index0.ts"
-			fmt.Println(segment)
 			return segment
 		}
 	}
@@ -176,6 +185,7 @@ func mkStanza(st Stanza) {
 	st.Bandwidth = f.Format.BitRate
 	codec := Blank
 	for _, i := range f.Streams {
+		//fmt.Printf("name %s; profile %s ; level %v\n",i.CodecName,i.Profile,i.Level)
 		if i.CodecType == "subtitle" {
 			substanza := st.mkSubStanza()
 			showStanza(substanza, Blank)
@@ -212,11 +222,24 @@ func do(st Stanza) {
 }
 
 func main() {
-	var st Stanza
-	st.mkFlags()
-	if st.Manifest != Blank {
-		do(st)
-	} else {
+
+	// Command line flags
+	flag.Var(&nf, "i", " one or more input files(-i input1.m3u8 -i input2.m3u8 -i sub1.m3u8)")
+	flag.StringVar(&SubGroup, "s", Blank, "add subtitle group i.e. SUBTITLES= (optional)")
+	flag.StringVar(&UriPrefix, "u", Blank, "url prefix to add to index.m3u8 path (optional)")
+	flag.Parse()
+	if len(nf) == 0 {
 		flag.PrintDefaults()
+	} else {
+		for i := 0; i < len(nf); i++ {
+			var st Stanza
+			st.SubGroup = SubGroup
+			st.UriPrefix = UriPrefix
+			st.Manifest = nf[i]
+			if st.Manifest != Blank {
+				do(st)
+			}
+		}
 	}
 }
+
