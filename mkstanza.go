@@ -15,9 +15,13 @@ import (
 var SubGroup string
 var UriPrefix string
 var Blank = ""
+//Maps for codec identifier strings
 var x264Profiles = map[string]string{"Baseline": "42E0", "Main": "4d40", "High": "6400"}
-var AudioProfiles = map[string]string{"HE-AACv2": "mp4a.40.5", "LC": "mp4a.40.2", "mp3": "mp4a.40.34"}
 
+var AudioProfiles = map[string]string{"HE-AAC": "mp4a.40.5","HE-AACv2": "mp4a.40.28",
+				      "LC": "mp4a.40.2", "mp3": "mp4a.40.34"}
+
+// To handle multiple inputs 
 type infiles []string
 
 // the flag.Value interface
@@ -34,11 +38,13 @@ func (nf *infiles) Set(value string) error {
 
 var nf infiles
 
+// Struct for media format
 type Format struct {
 	FormatName string `json:"format_name"`
 	BitRate    string `json:"bit_rate"`
 }
 
+// struct for individual streams
 type Stream struct {
 	CodecType string  `json:"codec_type"`
 	CodecName string  `json:"codec_name"`
@@ -47,12 +53,13 @@ type Stream struct {
 	Width     float64 `json:"width"`
 	Height    float64 `json:"height"`
 }
-
+// struct for media container
 type Container struct {
 	Streams []Stream `json:"streams"`
 	Format  Format   `json:"format"`
 }
 
+// struct for variant stanza
 type Stanza struct {
 	Manifest   string
 	UriPrefix  string
@@ -63,7 +70,7 @@ type Stanza struct {
 	VCodec     string
 	Segment    string
 }
-
+// generate video codec identifier string
 func (st *Stanza) SetVCodec(i Stream) {
 	st.Resolution = fmt.Sprintf("%vx%v", i.Width, i.Height)
 	if i.CodecName == "h264" {
@@ -127,7 +134,7 @@ func (st *Stanza) CodecString() string {
 	}
 	return Blank
 }
-
+// handle unsupported codecs 
 func unSupCodec(codecName string) {
 	fmt.Printf("the codec %s is not currently supported.\n\n", codecName)
 	syscall.Exit(-1)
@@ -242,4 +249,3 @@ func main() {
 		}
 	}
 }
-
