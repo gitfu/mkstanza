@@ -67,7 +67,7 @@ http://example.com/audio_and_video.m3u8
 ./mkstanza -i index_vtt.m3u8
 
 
-#EXT-XMEDIA:TYPE=SUBTITLES,GROUPID="WebVtt",NAME="Eng",DEFAULT=YES,AUTOSELECT=YES,FORCED=NO,LANGUAGE="en", URI="ndex_vtt.m3u8"
+#EXT-XMEDIA:TYPE=SUBTITLES,GROUPID="WebVtt",NAME="Eng",DEFAULT=YES,AUTOSELECT=YES,FORCED=NO,LANGUAGE="en", URI="index_vtt.m3u8"
 
 ```
 
@@ -77,35 +77,35 @@ http://example.com/audio_and_video.m3u8
 ./mkstanza -i /home/leroy/manifesto/ctrl/720/index.m3u8 \
 -i /home/leroy/manifesto/ctrl/360/index.m3u8 \
 -s fu \
--u http://fu.zu \
--i /home/leroy/manifesto/99/360/index.m3u8 \
--i /home/leroy/manifesto/99/720/index.m3u8 \
--i /home/leroy/manifesto/99/432/index.m3u8 \
--i /home/leroy/manifesto/scte35/subs/index_vtt.m3u8  
+-u http://example.com \
+-i manifesto/99/360/index.m3u8 \
+-i manifesto/99/720/index.m3u8 \
+-i manifesto/99/432/index.m3u8 \
+-i  subs/index_vtt.m3u8  
 
 
 
-#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=2191704,RESOLUTION=1280x720,CODECS="avc1.64001f,mp4a.40.5",SUBTITLES="fu"
-http://fu.zu/home/leroy/manifesto/ctrl/720/index.m3u8
+#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=2191704,RESOLUTION=1280x720,CODECS="avc1.64001f,mp4a.40.28",SUBTITLES="fu"
+http://example.com/manifesto/ctrl/720/index.m3u8
 
 
-#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=966813,RESOLUTION=640x360,CODECS="avc1.64001e,mp4a.40.5",SUBTITLES="fu"
-http://fu.zu/home/leroy/manifesto/ctrl/360/index.m3u8
+#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=966813,RESOLUTION=640x360,CODECS="avc1.64001e,mp4a.40.28",SUBTITLES="fu"
+http://example.com/manifesto/ctrl/360/index.m3u8
 
 
-#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=967302,RESOLUTION=640x360,CODECS="avc1.64001e,mp4a.40.5",SUBTITLES="fu"
-http://fu.zu/home/leroy/manifesto/99/360/index.m3u8
+#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=967302,RESOLUTION=640x360,CODECS="avc1.64001e,mp4a.40.28",SUBTITLES="fu"
+http://example.com/manifesto/99/360/index.m3u8
 
 
-#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=2189505,RESOLUTION=1280x720,CODECS="avc1.64001f,mp4a.40.5",SUBTITLES="fu"
-http://fu.zu/home/leroy/manifesto/99/720/index.m3u8
+#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=2189505,RESOLUTION=1280x720,CODECS="avc1.64001f,mp4a.40.28",SUBTITLES="fu"
+http://example.com/manifesto/99/720/index.m3u8
 
 
-#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1885970,RESOLUTION=768x432,CODECS="avc1.64001e,mp4a.40.5",SUBTITLES="fu"
-http://fu.zu/home/leroy/manifesto/99/432/index.m3u8
+#EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=1885970,RESOLUTION=768x432,CODECS="avc1.64001e,mp4a.40.28",SUBTITLES="fu"
+http://example.com/manifesto/99/432/index.m3u8
 
 
-#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="fu",NAME="English",DEFAULT=YES,AUTOSELECT=YES,FORCED=NO,LANGUAGE="en",URI="http://fu.zu/home/leroy/manifesto/scte35/subs/index_vtt.m3u8"
+#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="fu",NAME="English",DEFAULT=YES,AUTOSELECT=YES,FORCED=NO,LANGUAGE="en",URI="http://example.com/subs/index_vtt.m3u8"
 
 
 ```
